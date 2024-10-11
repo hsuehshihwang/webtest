@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Racing Cars with Full Controls</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls {
+            margin-bottom: 20px;
+        }
+        .racing-track-container {
+            overflow: hidden;
+            position: relative;
+            width: 800px;
+            height: 400px;
+        }
+        .racing-track {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+        }
+        .oval {
+            position: absolute;
+            border: 2px solid #000;
+            border-radius: 50%;
+        }
+        .car {
+            position: absolute;
+            transform-origin: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ddd;
+            border-radius: 15px;
+        }
+        .qr-code {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>QR Code Racing Cars with Full Controls</h1>
+
+    <!-- Controls for Car, QR Code, Speed, and Zoom -->
+    <div class="controls">
+        <!-- Zoom control -->
+        <div>
+            <label for="zoom-level">Zoom Level:</label>
+            <input type="range" id="zoom-level" min="0.5" max="2" step="0.1" value="1">
+            <span id="zoom-level-value">1x</span>
+        </div>
+        
+        <!-- Car Size control -->
+        <div>
+            <label for="car-size">Car Size:</label>
+            <input type="range" id="car-size" min="60" max="200" value="120">
+            <span id="car-size-value">120</span>px
+        </div>
+
+        <!-- QR Code Size control -->
+        <div>
+            <label for="qr-code-size">QR Code Size:</label>
+            <input type="range" id="qr-code-size" min="30" max="100" value="50">
+            <span id="qr-code-size-value">50</span>px
+        </div>
+
+        <!-- Speed controllers for each car -->
+        <div>
+            <label for="speed1">Car 1 Speed:</label>
+            <input type="range" id="speed1" min="0.01" max="0.1" step="0.01" value="0.02">
+            <span id="speed1-value">0.02</span> units
+        </div>
+        <div>
+            <label for="speed2">Car 2 Speed:</label>
+            <input type="range" id="speed2" min="0.01" max="0.1" step="0.01" value="0.02">
+            <span id="speed2-value">0.02</span> units
+        </div>
+        <div>
+            <label for="speed3">Car 3 Speed:</label>
+            <input type="range" id="speed3" min="0.01" max="0.1" step="0.01" value="0.02">
+            <span id="speed3-value">0.02</span> units
+        </div>
+        <div>
+            <label for="speed4">Car 4 Speed:</label>
+            <input type="range" id="speed4" min="0.01" max="0.1" step="0.01" value="0.02">
+            <span id="speed4-value">0.02</span> units
+        </div>
+        <div>
+            <label for="speed5">Car 5 Speed:</label>
+            <input type="range" id="speed5" min="0.01" max="0.1" step="0.01" value="0.02">
+            <span id="speed5-value">0.02</span> units
+        </div>
+
+        <!-- QR Code input fields -->
+        <div>
+            <label for="text1">Car 1 QR Code:</label>
+            <input type="text" id="text1" value="11111">
+        </div>
+        <div>
+            <label for="text2">Car 2 QR Code:</label>
+            <input type="text" id="text2" value="22222">
+        </div>
+        <div>
+            <label for="text3">Car 3 QR Code:</label>
+            <input type="text" id="text3" value="33333">
+        </div>
+        <div>
+            <label for="text4">Car 4 QR Code:</label>
+            <input type="text" id="text4" value="44444">
+        </div>
+        <div>
+            <label for="text5">Car 5 QR Code:</label>
+            <input type="text" id="text5" value="55555">
+        </div>
+    </div>
+
+    <!-- Oval Racing Track Container -->
+    <div class="racing-track-container" id="track-container">
+        <div class="racing-track" id="racing-track">
+            <div class="oval" style="width: 700px; height: 300px; top: 50px; left: 50px;" id="oval1"></div>
+            <div class="oval" style="width: 600px; height: 250px; top: 75px; left: 100px;" id="oval2"></div>
+            <div class="oval" style="width: 500px; height: 200px; top: 100px; left: 150px;" id="oval3"></div>
+            <div class="oval" style="width: 400px; height: 150px; top: 125px; left: 200px;" id="oval4"></div>
+            <div class="oval" style="width: 300px; height: 100px; top: 150px; left: 250px;" id="oval5"></div>
+
+            <!-- Cars -->
+            <div class="car" id="car1" style="background-color: red; width: 120px; height: 60px;">
+                <canvas id="qrcode1" class="qr-code"></canvas>
+            </div>
+            <div class="car" id="car2" style="background-color: blue; width: 120px; height: 60px;">
+                <canvas id="qrcode2" class="qr-code"></canvas>
+            </div>
+            <div class="car" id="car3" style="background-color: green; width: 120px; height: 60px;">
+                <canvas id="qrcode3" class="qr-code"></canvas>
+            </div>
+            <div class="car" id="car4" style="background-color: yellow; width: 120px; height: 60px;">
+                <canvas id="qrcode4" class="qr-code"></canvas>
+            </div>
+            <div class="car" id="car5" style="background-color: purple; width: 120px; height: 60px;">
+                <canvas id="qrcode5" class="qr-code"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Link to the QR Code library (from CDN) -->
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+
+    <script>
+        let carWidth = 120;
+        let carHeight = 60;
+        let qrCodeSize = 50;
+        let carSpeeds = [0.02, 0.02, 0.02, 0.02, 0.02];
+
+        // Function to generate QR code for each car
+        function generateQRCode(carNumber, text) {
+            var canvas = document.getElementById(`qrcode${carNumber}`);
+            canvas.width = qrCodeSize;
+            canvas.height = qrCodeSize;
+            QRCode.toCanvas(canvas, text, { width: qrCodeSize, height: qrCodeSize }, function (error) {
+                if (error) {
+                    console.error(error);
+                } else {
+                    console.log(`QR code generated for Car ${carNumber}`);
+                }
+            });
+        }
+
+        // Initialize QR codes for cars
+        function initializeQRCodes() {
+            for (let i = 1; i <= 5; i++) {
+                let text = document.getElementById(`text${i}`).value;
+                generateQRCode(i, text);
+            }
+        }
+
+        // Function to adjust the zoom level
+        function adjustZoom() {
+            let zoomValue = document.getElementById("zoom-level").value;
+            document.getElementById("zoom-level-value").innerText = `${zoomValue}x`;
+            document.getElementById("track-container").style.transform = `scale(${zoomValue})`;
+        }
+
+        // Function to adjust car and QR code sizes
+        function adjustSizes() {
+            carWidth = parseInt(document.getElementById("car-size").value);
+            carHeight = carWidth / 2;
+            qrCodeSize = parseInt(document.getElementById("qr-code-size").value);
+            document.getElementById("car-size-value").innerText = carWidth;
+            document.getElementById("qr-code-size-value").innerText = qrCodeSize;
+            initializeQRCodes();
+        }
+
+        // Function to adjust speeds
+        function adjustSpeeds() {
+            for (let i = 1; i <= 5; i++) {
+                carSpeeds[i - 1] = parseFloat(document.getElementById(`speed${i}`).value);
+                document.getElementById(`speed${i}-value`).innerText = carSpeeds[i - 1];
+            }
+        }
+
+        // Car animation for oval tracks
+        let angles = [0, 0, 0, 0, 0];
+        const xRadii = [350, 300, 250, 200, 150]; // Horizontal radii (X-axis)
+        const yRadii = [150, 125, 100, 75, 50];   // Vertical radii (Y-axis)
+        const centerX = 400; // X center of the racing track (half of 800px width)
+        const centerY = 200; // Y center of the racing track (half of 400px height)
+
+        function animateCars() {
+            for (let i = 1; i <= 5; i++) {
+                let car = document.getElementById(`car${i}`);
+                angles[i - 1] += carSpeeds[i - 1];
+                let angle = angles[i - 1];
+
+                // Calculate positions based on ellipse formula (xRadii and yRadii)
+                let x = xRadii[i - 1] * Math.cos(angle);
+                let y = yRadii[i - 1] * Math.sin(angle);
+
+                // Calculate the tangent vector (approximation of the car's direction)
+                let dx = -xRadii[i - 1] * Math.sin(angle);
+                let dy = yRadii[i - 1] * Math.cos(angle);
+                let rotationAngle = Math.atan2(dy, dx); // Angle of the tangent
+
+                // Center the car based on the oval path and rotate to face the direction
+                car.style.width = `${carWidth}px`;
+                car.style.height = `${carHeight}px`;
+                car.style.transform = `translate(${x + centerX - carWidth / 2}px, ${y + centerY - carHeight / 2}px) rotate(${rotationAngle}rad)`;
+            }
+            requestAnimationFrame(animateCars); // Keep animating
+        }
+
+        // Initialize the QR codes and start the animation
+        window.onload = function () {
+            initializeQRCodes();
+            animateCars();
+            
+            // Add event listeners for the controls
+            document.getElementById("zoom-level").addEventListener("input", adjustZoom);
+            document.getElementById("car-size").addEventListener("input", adjustSizes);
+            document.getElementById("qr-code-size").addEventListener("input", adjustSizes);
+            document.getElementById("speed1").addEventListener("input", adjustSpeeds);
+            document.getElementById("speed2").addEventListener("input", adjustSpeeds);
+            document.getElementById("speed3").addEventListener("input", adjustSpeeds);
+            document.getElementById("speed4").addEventListener("input", adjustSpeeds);
+            document.getElementById("speed5").addEventListener("input", adjustSpeeds);
+        };
+    </script>
+
+</body>
+</html>
+
