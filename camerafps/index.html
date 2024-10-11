@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camera Refresh Rate (FPS) Detection</title>
+</head>
+<body>
+  <h1>Camera Refresh Rate (FPS)</h1>
+  
+  <!-- Video stream -->
+  <video id="video" width="640" height="480" autoplay playsinline></video>
+  <p>Estimated Camera FPS: <span id="fps">0</span></p>
+
+  <script>
+    const video = document.getElementById('video');
+    const fpsDisplay = document.getElementById('fps');
+    let lastFrameTime = 0;
+    let frameCount = 0;
+    let fps = 0;
+
+    // Access the webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error("Error accessing the webcam: " + err);
+      });
+
+    // Function to estimate FPS by calculating time difference between frames
+    function estimateFPS(timestamp) {
+      if (lastFrameTime) {
+        const timeElapsed = timestamp - lastFrameTime;
+        frameCount++;
+        
+        if (timeElapsed >= 1000) { // If 1 second has passed
+          fps = frameCount; // FPS is the number of frames in that 1 second
+          frameCount = 0;
+          fpsDisplay.innerText = fps.toFixed(1); // Update the FPS display
+          lastFrameTime = timestamp; // Reset the last frame time
+        }
+      } else {
+        lastFrameTime = timestamp; // Initialize the first frame time
+      }
+
+      // Continue the loop
+      requestAnimationFrame(estimateFPS);
+    }
+
+    // Start the FPS estimation
+    requestAnimationFrame(estimateFPS);
+  </script>
+</body>
+</html>
+
