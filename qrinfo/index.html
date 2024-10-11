@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Detection with Animated Text</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #333;
+    }
+    canvas {
+      border: 2px solid white;
+    }
+  </style>
+</head>
+<body>
+  <!-- Video stream from camera -->
+  <video id="video" width="640" height="480" autoplay playsinline style="display:none;"></video>
+
+  <!-- Canvas for animation and text overlay -->
+  <canvas id="canvas" width="640" height="480"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script> <!-- QR Code detection library -->
+
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    let qrInfo = "Waiting for QR code..."; // Text that will display detected QR code info
+    let textAlpha = 1.0; // Transparency level for fading effect
+
+    // Access the webcam
+    navigator.mediaDevices.getUserMedia({ video: true })
+      .then((stream) => {
+        video.srcObject = stream;
+      })
+      .catch((err) => {
+        console.error("Error accessing the webcam: " + err);
+      });
+
+    // QR Code detection and drawing
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      // Draw animation (simple bouncing rectangle as an example)
+      ctx.fillStyle = "#3498db";
+      ctx.fillRect(100 + Math.sin(Date.now() / 500) * 100, 150, 200, 100);
+
+      // Capture a frame from the video for QR code detection
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, canvas.width, canvas.height);
+
+      if (code) {
+        qrInfo = `QR Code detected: ${code.data}`;
+        textAlpha = 1.0; // Reset the fade-out effect when new QR code is detected
+      }
+
+      // Draw the detected QR code information as overlay text
+      ctx.globalAlpha = textAlpha;
+      ctx.font = "24px Arial";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(qrInfo, 20, 40);
+      ctx.globalAlpha = 1.0;
+
+      // Fade out text effect
+      if (textAlpha > 0) {
+        textAlpha -= 0.01;
+      }
+
+      // Continue the animation loop
+      requestAnimationFrame(draw);
+    }
+
+    // Start the drawing loop
+    draw();
+  </script>
+</body>
+</html>
+
