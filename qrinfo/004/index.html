@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Optimized Fast QR Code Detection</title>
+  <title>QR Code Detection with Camera Selection</title>
   <style>
     body {
       margin: 0;
@@ -15,12 +15,25 @@
       height: 100vh;
       background-color: #333;
     }
+    canvas, select {
+      margin-bottom: 10px;
+    }
     canvas {
       border: 2px solid white;
+    }
+    label {
+      color: white;
     }
   </style>
 </head>
 <body>
+  <h1 style="color:white;">QR Code Detection with Camera Selection</h1>
+  
+  <!-- Camera Selection Dropdown -->
+  <label for="cameraSelect" style="color:white;">Select Camera:</label>
+  <select id="cameraSelect"></select>
+
+  <!-- Canvas for video feed and QR code detection -->
   <canvas id="canvas" width="640" height="480"></canvas>
 
   <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
@@ -28,50 +41,95 @@
   <script>
     const canvas = document.getElementById('canvas');
     const ctx = canvas.getContext('2d');
+    const cameraSelect = document.getElementById('cameraSelect');
+    let currentStream = null;
     let qrInfo = "Waiting for QR code...";
     let lastDetectedTime = 0;
 
-    const constraints = {
-      video: {
-        frameRate: { ideal: 60 }, // Requesting 60 FPS
-        width: { ideal: 640 },
-        height: { ideal: 480 }
+    // Get available video input devices (cameras)
+    function populateCameraList() {
+      navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          
+          cameraSelect.innerHTML = ''; // Clear existing options
+
+          videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `Camera ${index + 1}`;
+            cameraSelect.appendChild(option);
+          });
+
+          if (videoDevices.length > 0) {
+            startVideoStream(videoDevices[0].deviceId); // Start with the first camera by default
+          }
+        })
+        .catch(err => {
+          console.error("Error listing cameras: " + err);
+        });
+    }
+
+    // Function to start video stream for the selected camera
+    function startVideoStream(deviceId) {
+      if (currentStream) {
+        currentStream.getTracks().forEach(track => track.stop()); // Stop the previous stream
       }
-    };
 
-    navigator.mediaDevices.getUserMedia(constraints)
-      .then((stream) => {
-        const video = document.createElement('video');
-        video.srcObject = stream;
-        video.play();
+      const constraints = {
+        video: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          frameRate: { ideal: 60 }, // Requesting 60 FPS
+          width: { ideal: 640 },
+          height: { ideal: 480 }
+        }
+      };
 
-        video.addEventListener('play', function() {
-          const draw = () => {
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then(stream => {
+          currentStream = stream;
+          const video = document.createElement('video');
+          video.srcObject = stream;
+          video.play();
 
-            // Smaller detection area
-            const imageData = ctx.getImageData(200, 150, 240, 180);
-            const code = jsQR(imageData.data, 240, 180);
+          video.addEventListener('play', function() {
+            function draw() {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-            if (code && (Date.now() - lastDetectedTime > 100)) { // Throttle detections to avoid too much processing
-              qrInfo = `QR Code detected: ${code.data}`;
-              lastDetectedTime = Date.now();
+              // Smaller detection area to increase detection speed
+              const imageData = ctx.getImageData(200, 150, 240, 180);
+              const code = jsQR(imageData.data, 240, 180);
+
+              if (code && (Date.now() - lastDetectedTime > 100)) { // Throttle detections
+                qrInfo = `QR Code detected: ${code.data}`;
+                lastDetectedTime = Date.now();
+              }
+
+              // Display QR code information
+              ctx.font = "24px Arial";
+              ctx.fillStyle = "white";
+              ctx.fillText(qrInfo, 10, 30);
+
+              requestAnimationFrame(draw);
             }
 
-            // Overlay detected info
-            ctx.font = "24px Arial";
-            ctx.fillStyle = "white";
-            ctx.fillText(qrInfo, 10, 30);
-
-            requestAnimationFrame(draw);
-          };
-
-          draw();
+            draw();
+          });
+        })
+        .catch(err => {
+          console.error("Error accessing the camera: " + err);
         });
-      })
-      .catch((err) => {
-        console.error("Error accessing the camera: " + err);
-      });
+    }
+
+    // Listen for camera selection changes
+    cameraSelect.addEventListener('change', function() {
+      const selectedDeviceId = cameraSelect.value;
+      startVideoStream(selectedDeviceId); // Switch to the selected camera
+    });
+
+    // Populate the camera list on page load
+    populateCameraList();
   </script>
 </body>
 </html>
