@@ -1,228 +1,209 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QR Code Racing Cars with Zoom</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
-        .racing-track-container {
-            overflow: hidden; /* Hides overflow when zoomed */
-            position: relative;
-            width: 600px;
-            height: 600px;
-        }
-        .racing-track {
-            position: absolute;
-            transform-origin: center center; /* Ensures zooming occurs from the center */
-            width: 600px;
-            height: 600px;
-        }
-        .circle {
-            position: absolute;
-            border: 2px solid #000;
-            border-radius: 50%;
-        }
-        .car {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform-origin: center;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            border-radius: 15px;
-            background-color: #ddd;
-        }
-        .qr-code {
-            display: block;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QR Code Detection with Camera Zoom and Adjustable Detection Area</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background-color: #333;
+    }
+    video, canvas {
+      border: 2px solid white;
+      margin-bottom: 10px;
+    }
+    select, input, label {
+      margin-bottom: 10px;
+      color: white;
+    }
+  </style>
 </head>
 <body>
+  <h1 style="color:white;">QR Code Detection with Camera Zoom and Adjustable Detection Area</h1>
+  
+  <!-- Camera Selection Dropdown -->
+  <select id="cameraSelect"></select>
 
-    <h1>QR Code Racing Cars with Zoom</h1>
+  <!-- Zoom Control -->
+  <label for="zoomControl">Zoom: </label>
+  <input type="range" id="zoomControl" min="1" max="3" step="0.1" value="1">
 
-    <!-- Zoom slider control -->
-    <div>
-        <label for="zoom-level">Zoom Level:</label>
-        <input type="range" id="zoom-level" min="0.5" max="2" step="0.1" value="1">
-        <span id="zoom-level-value">1x</span>
-    </div>
+  <!-- QR Detection Area Controls -->
+  <label>Detection Area Controls:</label>
+  <label for="areaWidth">Width:</label>
+  <input type="range" id="areaWidth" min="50" max="640" step="10" value="320">
+  <label for="areaHeight">Height:</label>
+  <input type="range" id="areaHeight" min="50" max="480" step="10" value="240">
+  <label for="areaX">X Position:</label>
+  <input type="range" id="areaX" min="0" max="640" step="10" value="160">
+  <label for="areaY">Y Position:</label>
+  <input type="range" id="areaY" min="0" max="480" step="10" value="120">
 
-    <!-- Controllers for adjusting car and QR code sizes -->
-    <div>
-        <label for="car-size">Car Size:</label>
-        <input type="range" id="car-size" min="60" max="200" value="120">
-        <span id="car-size-value">120</span>px
-    </div>
-    <div>
-        <label for="qr-code-size">QR Code Size:</label>
-        <input type="range" id="qr-code-size" min="10" max="100" value="30">
-        <span id="qr-code-size-value">30</span>px
-    </div>
+  <!-- Video stream from camera -->
+  <video id="video" width="640" height="480" autoplay playsinline style="display:none;"></video>
 
-    <!-- Text inputs for QR codes with default values -->
-    <div>
-        <label for="text1">Car 1:</label>
-        <input type="text" id="text1" value="11111" placeholder="Enter text for Car 1">
-    </div>
-    <div>
-        <label for="text2">Car 2:</label>
-        <input type="text" id="text2" value="22222" placeholder="Enter text for Car 2">
-    </div>
-    <div>
-        <label for="text3">Car 3:</label>
-        <input type="text" id="text3" value="33333" placeholder="Enter text for Car 3">
-    </div>
-    <div>
-        <label for="text4">Car 4:</label>
-        <input type="text" id="text4" value="44444" placeholder="Enter text for Car 4">
-    </div>
-    <div>
-        <label for="text5">Car 5:</label>
-        <input type="text" id="text5" value="55555" placeholder="Enter text for Car 5">
-    </div>
+  <!-- Canvas for animation and text overlay -->
+  <canvas id="canvas" width="640" height="480"></canvas>
 
-    <!-- Racing Track with 5 Concentric Circles -->
-    <div class="racing-track-container">
-        <div class="racing-track" id="racing-track">
-            <div class="circle" style="width: 500px; height: 500px; top: 50px; left: 50px;"></div>
-            <div class="circle" style="width: 400px; height: 400px; top: 100px; left: 100px;"></div>
-            <div class="circle" style="width: 300px; height: 300px; top: 150px; left: 150px;"></div>
-            <div class="circle" style="width: 200px; height: 200px; top: 200px; left: 200px;"></div>
-            <div class="circle" style="width: 100px; height: 100px; top: 250px; left: 250px;"></div>
+  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script> <!-- QR Code detection library -->
 
-            <div class="car" id="car1" style="background-color: red;">
-                <canvas id="qrcode1" class="qr-code"></canvas>
-            </div>
-            <div class="car" id="car2" style="background-color: blue;">
-                <canvas id="qrcode2" class="qr-code"></canvas>
-            </div>
-            <div class="car" id="car3" style="background-color: green;">
-                <canvas id="qrcode3" class="qr-code"></canvas>
-            </div>
-            <div class="car" id="car4" style="background-color: yellow;">
-                <canvas id="qrcode4" class="qr-code"></canvas>
-            </div>
-            <div class="car" id="car5" style="background-color: purple;">
-                <canvas id="qrcode5" class="qr-code"></canvas>
-            </div>
-        </div>
-    </div>
+  <script>
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const cameraSelect = document.getElementById('cameraSelect');
+    const zoomControl = document.getElementById('zoomControl');
 
-    <!-- Link to the QR Code library (from CDN) -->
-    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    // Detection area controls
+    const areaWidthControl = document.getElementById('areaWidth');
+    const areaHeightControl = document.getElementById('areaHeight');
+    const areaXControl = document.getElementById('areaX');
+    const areaYControl = document.getElementById('areaY');
 
-    <script>
-        let carWidth = 120;
-        let carHeight = 60;
-        let qrCodeSize = 30;
-        let zoomLevel = 1; // Initial zoom level
+    let qrInfo = "Waiting for QR code..."; // Text that will display detected QR code info
+    let textAlpha = 1.0; // Transparency level for fading effect
+    let currentStream = null;
+    let zoomLevel = 1.0;
 
-        // Function to generate QR code for each car
-        function generateQRCode(carNumber, text) {
-            // Get the canvas element for the car's QR code
-            var canvas = document.getElementById(`qrcode${carNumber}`);
+    // Initial detection area settings
+    let detectionArea = {
+      x: 160,
+      y: 120,
+      width: 320,
+      height: 240
+    };
 
-            // Set canvas size to the current QR code size
-            canvas.width = qrCodeSize;
-            canvas.height = qrCodeSize;
+    // Function to start the video stream with the selected camera
+    function startVideoStream(deviceId) {
+      if (currentStream) {
+        // Stop the previous stream before starting a new one
+        currentStream.getTracks().forEach(track => track.stop());
+      }
 
-            // Generate the QR code on the canvas
-            QRCode.toCanvas(canvas, text, {
-                width: qrCodeSize, // Set QR code size
-                height: qrCodeSize // Set QR code size
-            }, function (error) {
-                if (error) {
-                    console.error(error);
-                } else {
-                    console.log(`QR code generated successfully for Car ${carNumber}!`);
-                }
-            });
+      const constraints = {
+        video: {
+          deviceId: deviceId ? { exact: deviceId } : undefined,
+          width: { ideal: 640 },
+          height: { ideal: 480 }
         }
+      };
 
-        // Generate QR codes for all cars based on their input fields
-        function initializeQRCodes() {
-            for (let i = 1; i <= 5; i++) {
-                let text = document.getElementById(`text${i}`).value;
-                generateQRCode(i, text);
-            }
-        }
+      navigator.mediaDevices.getUserMedia(constraints)
+        .then((stream) => {
+          currentStream = stream;
+          video.srcObject = stream;
+        })
+        .catch((err) => {
+          console.error("Error accessing the camera: " + err);
+        });
+    }
 
-        // Function to adjust car and QR code size based on sliders
-        function adjustSizes() {
-            let carSizeValue = document.getElementById("car-size").value;
-            let qrCodeSizeValue = document.getElementById("qr-code-size").value;
+    // Populate the camera dropdown with available video input devices
+    function populateCameraList() {
+      navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+          const videoDevices = devices.filter(device => device.kind === 'videoinput');
+          
+          cameraSelect.innerHTML = ''; // Clear existing options
+          
+          videoDevices.forEach((device, index) => {
+            const option = document.createElement('option');
+            option.value = device.deviceId;
+            option.text = device.label || `Camera ${index + 1}`;
+            cameraSelect.appendChild(option);
+          });
+          
+          // Start video stream with the first camera by default
+          if (videoDevices.length > 0) {
+            startVideoStream(videoDevices[0].deviceId);
+          }
+        })
+        .catch((err) => {
+          console.error("Error listing cameras: " + err);
+        });
+    }
 
-            // Update the display for car and QR code size
-            document.getElementById("car-size-value").innerText = carSizeValue;
-            document.getElementById("qr-code-size-value").innerText = qrCodeSizeValue;
+    // Listen for changes in the camera dropdown selection
+    cameraSelect.addEventListener('change', () => {
+      startVideoStream(cameraSelect.value);
+    });
 
-            // Update car and QR code sizes
-            carWidth = parseInt(carSizeValue);
-            carHeight = carWidth / 2;  // Keeping the aspect ratio for cars
-            qrCodeSize = parseInt(qrCodeSizeValue);
+    // Listen for zoom changes
+    zoomControl.addEventListener('input', (e) => {
+      zoomLevel = e.target.value;
+    });
 
-            // Reinitialize QR codes with updated size
-            initializeQRCodes();
-        }
+    // Listen for detection area control changes
+    areaWidthControl.addEventListener('input', (e) => {
+      detectionArea.width = parseInt(e.target.value);
+    });
 
-        // Function to adjust zoom level
-        function adjustZoom() {
-            let zoomValue = document.getElementById("zoom-level").value;
+    areaHeightControl.addEventListener('input', (e) => {
+      detectionArea.height = parseInt(e.target.value);
+    });
 
-            // Update zoom level display
-            document.getElementById("zoom-level-value").innerText = `${zoomValue}x`;
+    areaXControl.addEventListener('input', (e) => {
+      detectionArea.x = parseInt(e.target.value);
+    });
 
-            // Apply zoom effect to the entire racing track
-            zoomLevel = parseFloat(zoomValue);
-            document.getElementById("racing-track").style.transform = `scale(${zoomLevel})`;
-        }
+    areaYControl.addEventListener('input', (e) => {
+      detectionArea.y = parseInt(e.target.value);
+    });
 
-        // Animation for the cars to run around their respective circles
-        let angle = 0;
-        const radii = [250, 200, 150, 100, 50]; // Different radii for the 5 cars
+    // QR Code detection and drawing
+    function draw() {
+      // Clear the canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        function animateCars() {
-            angle += 0.02; // Speed of the cars
-            for (let i = 1; i <= 5; i++) {
-                let car = document.getElementById(`car${i}`);
-                let carAngle = angle + (i * (Math.PI * 2 / 5)); // Distribute cars evenly in a circle
+      // Apply zoom by scaling the video feed
+      ctx.save();
+      ctx.scale(zoomLevel, zoomLevel);
+      ctx.drawImage(video, 0, 0, canvas.width / zoomLevel, canvas.height / zoomLevel);
+      ctx.restore();
 
-                // Calculate the x and y positions for the car based on its radius
-                let x = radii[i - 1] * Math.cos(carAngle) - carWidth / 2;
-                let y = radii[i - 1] * Math.sin(carAngle) - carHeight / 2;
+      // Draw the adjustable detection area as a red outline (not filled)
+      ctx.strokeStyle = "#ff0000"; // Red border
+      ctx.lineWidth = 3;
+      ctx.strokeRect(detectionArea.x, detectionArea.y, detectionArea.width, detectionArea.height);
 
-                // Calculate the angle of rotation (tangent to the circle)
-                let rotation = carAngle + Math.PI / 2;
+      // Capture a frame from the video for QR code detection
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, canvas.width, canvas.height);
 
-                // Update car size and move it in a circular path
-                car.style.width = `${carWidth}px`;
-                car.style.height = `${carHeight}px`;
-                car.style.transform = `translate(${x}px, ${y}px) rotate(${rotation}rad)`;
-            }
-            requestAnimationFrame(animateCars); // Keep animating
-        }
+      if (code) {
+        qrInfo = `QR Code detected: ${code.data}`;
+        textAlpha = 1.0; // Reset the fade-out effect when new QR code is detected
+      }
 
-        // Initialize the QR codes when the page loads
-        window.onload = function() {
-            initializeQRCodes();
-            animateCars(); // Start the car animation
+      // Draw the detected QR code information as overlay text
+      ctx.globalAlpha = textAlpha;
+      ctx.font = "24px Arial";
+      ctx.fillStyle = "#fff";
+      ctx.fillText(qrInfo, 20, 40);
+      ctx.globalAlpha = 1.0;
 
-            // Add event listeners for the sliders
-            document.getElementById("car-size").addEventListener("input", adjustSizes);
-            document.getElementById("qr-code-size").addEventListener("input", adjustSizes);
-            document.getElementById("zoom-level").addEventListener("input", adjustZoom);
-        };
-    </script>
+      // Fade out text effect
+      if (textAlpha > 0) {
+        textAlpha -= 0.01;
+      }
 
+      // Continue the animation loop
+      requestAnimationFrame(draw);
+    }
+
+    // Start the drawing loop
+    draw();
+
+    // Populate the camera list on page load
+    populateCameraList();
+  </script>
 </body>
 </html>
 
