@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OpenCV.js Camera Selection with Log</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <h2>Camera Selection and Object Detection</h2>
+
+  <!-- Dropdown for camera selection -->
+  <label for="cameraSelect">Select Camera:</label>
+  <select id="cameraSelect"></select>
+
+  <!-- Video stream -->
+  <video id="video" width="640" height="480" autoplay></video>
+
+  <!-- Canvas for processing -->
+  <canvas id="canvasOutput" width="640" height="200"></canvas>
+
+  <!-- OpenCV.js -->
+  <script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCvReady();"></script>
+
+  <script>
+    let video = document.getElementById('video');
+    let cameraSelect = document.getElementById('cameraSelect');
+    let canvas = document.getElementById('canvasOutput');
+    let ctx = canvas.getContext('2d');
+    let logMessages = [];
+    
+    // Populate dropdown with available cameras
+    navigator.mediaDevices.enumerateDevices().then(devices => {
+      devices.forEach(device => {
+        if (device.kind === 'videoinput') {
+          let option = document.createElement('option');
+          option.value = device.deviceId;
+          option.text = device.label || `Camera ${cameraSelect.length + 1}`;
+          cameraSelect.appendChild(option);
+        }
+      });
+    });
+
+    // Function to open the camera based on selection
+    function openCamera(deviceId) {
+      navigator.mediaDevices.getUserMedia({ video: { deviceId: deviceId } }).then(stream => {
+        video.srcObject = stream;
+        addLogMessage(`Camera selected: ${deviceId}`);
+      });
+    }
+
+    cameraSelect.onchange = function () {
+      openCamera(cameraSelect.value);
+    };
+
+    // Add log message to the list and refresh canvas every 2 seconds
+    function addLogMessage(message) {
+      const timestamp = new Date().toLocaleTimeString();
+      logMessages.push(`[${timestamp}] ${message}`);
+
+      if (logMessages.length > 5) {
+        logMessages.shift();  // Keep the log to last 5 messages
+      }
+      drawLogMessages();
+    }
+
+    // Function to draw the log messages on the canvas
+    function drawLogMessages() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);  // Clear canvas
+      ctx.font = '16px Arial';
+      ctx.fillStyle = 'black';
+
+      logMessages.forEach((msg, index) => {
+        ctx.fillText(msg, 10, 30 + index * 30);  // Draw each log message
+      });
+    }
+
+    // Refresh log every 2 seconds
+    setInterval(function () {
+      addLogMessage("Refreshing log...");
+    }, 2000);
+
+    // On OpenCV.js ready
+    function onOpenCvReady() {
+      addLogMessage("OpenCV.js is ready.");
+    }
+  </script>
+</body>
+</html>
+
