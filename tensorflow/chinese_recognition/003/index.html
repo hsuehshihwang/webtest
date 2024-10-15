@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chinese Word AI Learning</title>
+</head>
+<body>
+    <h1>Chinese Word AI Learning</h1>
+
+    <!-- Dropdown for selecting the camera -->
+    <select id="camera-select"></select>
+    
+    <video id="camera" autoplay playsinline></video>
+
+    <div>
+        <input type="text" id="chinese-word" placeholder="Enter Chinese Word">
+        <button id="apply-button">Apply Learning</button>
+    </div>
+
+    <button id="start-button">Start Prediction</button>
+    <p id="prediction-result"></p>
+
+    <!-- Buttons for exporting and importing the model -->
+    <button id="export-button">Export Model</button>
+    <input type="file" id="import-model" />
+
+    <!-- Canvas for logging -->
+    <canvas id="log-canvas" width="400" height="200"></canvas>
+
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="app.js"></script>
+</body>
+</html>
+
